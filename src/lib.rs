@@ -62,10 +62,16 @@ impl Config {
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let contents = fs::read_to_string(config.filename)?;
 
+    // let results = if config.case_sensitive {
+    //     search(&config.query, &contents)
+    // } else {
+    //     search_case_insensitive(&config.query, &contents)
+    // };
+
     let results = if config.case_sensitive {
-        search(&config.query, &contents)
+        search(&contents, &|line| line.contains(&config.query))
     } else {
-        search_case_insensitive(&config.query, &contents)
+        search(&contents, &|line| line.contains(&config.query))
     };
 
     for line in results {
@@ -75,20 +81,25 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
-    contents
-        .lines()
-        .filter(|line| line.contains(query))
-        .collect()
+type Prectible<'a> = &'a dyn Fn(&&str) -> bool;
+
+fn search<'a>(contents: &'a str, cb: Prectible) -> Vec<&'a str> {
+    contents.lines().filter(cb).collect()
 }
 
-fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
-    contents
-        .lines()
-        .filter(|line| line.to_lowercase().contains(&query.to_lowercase()))
-        .collect()
-}
+// fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
+//     contents
+//         .lines()
+//         .filter(|line| line.contains(query))
+//         .collect()
+// }
 
+// fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
+//     contents
+//         .lines()
+//         .filter(|line| line.to_lowercase().contains(&query.to_lowercase()))
+//         .collect()
+// }
 
 #[cfg(test)]
 mod tests {
@@ -106,7 +117,10 @@ mod tests {
 14 23/03 Revisão Prova 1
 15 24/03 Prova 1"#;
 
-        assert_eq!(vec!["11 10/03 teste Estrutural"], search(query, contents));
+        assert_eq!(
+            vec!["11 10/03 teste Estrutural"],
+            search(contents, &|line| line.contains(query)) // search(query, contents)
+        );
     }
 
     #[test]
@@ -127,7 +141,9 @@ mod tests {
                 "10 09/03 Teste Estrutural",
                 "11 10/03 teste Estrutural"
             ],
-            search_case_insensitive(query, contents)
+            search(contents, &|line| line
+                .to_lowercase()
+                .contains(&query.to_lowercase())) // search_case_insensitive(query, contents)
         );
     }
 
