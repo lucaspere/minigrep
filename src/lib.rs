@@ -12,6 +12,7 @@ pub struct Config {
     pub query: String,
     pub filename: String,
     pub case_sensitive: bool,
+    pub invert_match: bool,
 }
 
 impl Config {
@@ -29,11 +30,13 @@ impl Config {
         };
 
         let case_sensitive = env::var("CASE_INSENSITIVE").is_err();
+        let invert_match = env::var("INVERT_MATCH").is_err();
 
         Ok(Config {
             query,
             filename,
             case_sensitive,
+            invert_match
         })
     }
 }
@@ -62,17 +65,25 @@ impl Config {
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let contents = fs::read_to_string(config.filename)?;
 
-    // let results = if config.case_sensitive {
-    //     search(&config.query, &contents)
-    // } else {
-    //     search_case_insensitive(&config.query, &contents)
-    // };
-
-    let results = if config.case_sensitive {
-        search(&contents, &|line| line.contains(&config.query))
+    let results = if !config.invert_match {
+        if config.case_sensitive {
+            search(&contents, &|line| !line.contains(&config.query))
+        } else {
+            search(&contents, &|line| !line.contains(&config.query))
+        }
     } else {
-        search(&contents, &|line| line.contains(&config.query))
+        if config.case_sensitive {
+            search(&contents, &|line| line.contains(&config.query))
+        } else {
+            search(&contents, &|line| line.contains(&config.query))
+        }
     };
+
+    // let results = if config.case_sensitive {
+    //     search(&contents, &|line| line.contains(&config.query))
+    // } else {
+    //     search(&contents, &|line| line.contains(&config.query))
+    // };
 
     for line in results {
         println!("{}", line);

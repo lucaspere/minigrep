@@ -3,6 +3,7 @@ use minigrep::*;
 #[test]
 fn should_run_correctly() {
     let config = Config {
+        //invert_match: false,
         case_sensitive: true,
         filename: "cronograma.txt".to_string(),
         query: "feriado".to_string(),
@@ -16,6 +17,7 @@ fn should_run_correctly() {
 #[test]
 fn should_occur_error() {
     let config = Config {
+        //invert_match: false,
         case_sensitive: true,
         filename: "cronograma.csv".to_string(),
         query: "feriado".to_string(),
